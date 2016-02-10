@@ -1,0 +1,37 @@
+{
+  "name": "react-gdb",
+  "version": "0.0.1",
+  "author": "Jonas Finnemann Jensen <jopsen@gmail.com>",
+  "description": "GDB frontend in react.js",
+  "license": "MPL-2.0",
+  "main": "lib/index.js",
+  "scripts": {
+    "compile": "babel-compile -c tc-rules/babel6 src:lib test:.test",
+    "prepublish": "npm run compile",
+    "pretest": "npm run compile",
+    "test": "mocha .test/*_test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:taskcluster/react-gdb.git"
+  },
+  "dependencies": {
+    "debug": "^2.2.0",
+    "lodash": "^4.3.0",
+    "promise": "^7.1.1",
+    "babel-runtime": "^6.0.0",
+    "ws": "^1.0.1",
+    "websocket-stream": "^3.1.0"
+  },
+  "devDependencies": {
+    "babel-compile": "^1.0.0",
+    "babel-core": "^6.1.21",
+    "babel-plugin-transform-es2015-modules-commonjs": "^6.1.20",
+    "babel-plugin-transform-runtime": "^6.1.18",
+    "babel-plugin-transform-regenerator": "^6.4.3",
+    "babel-preset-stage-1": "^6.1.18",
+    "mocha": "^2.4.5",
+    "tc-rules": "^2.0.0",
+    "source-map-support": "^0.4.0"
+  }
+}
