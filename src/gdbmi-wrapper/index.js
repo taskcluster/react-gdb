@@ -1,7 +1,8 @@
 var GDBWrapper = require('./gdbwrapper');
 var path = require('path');
+var MIWrapper = require('./miwrapper');
 /*
-//Test code
+//Test code -- works
 var wrapperConfig = {
   exec: 'hello',
   config: {
@@ -13,4 +14,4 @@ var wrapperConfig = {
 var gdb = new GDBWrapper(wrapperConfig);
 */
 
-module.exports = GDBWrapper;
+module.exports = MIWrapper;

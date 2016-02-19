@@ -55,7 +55,7 @@ GDBWrapper.prototype.write = function (data) {
     console.log("Error writing to the gdb instance");
   }
 }
-
+//not sure if the following methods are necessary
 GDBWrapper.prototype.onOutData = function (cb) {
   this.outStream.on("data",cb);
 };
