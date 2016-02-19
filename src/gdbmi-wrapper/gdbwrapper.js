@@ -21,7 +21,7 @@ GDBWrapper.prototype.init = function (exec,config) {
   gdb_args = ["--interpreter=mi","-q"].concat(exec);
   if(config){
     config.cwd = config.cwd || path.join(__dirname,'');
-    config.stdio = config.stdio || ['pipe','pipe','ignore'];
+    config.stdio = config.stdio || ['pipe','pipe','pipe'];
     config.detached = config.detached || false;
   }else{
     config = {
