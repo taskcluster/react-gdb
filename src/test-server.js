@@ -2,7 +2,7 @@ let ws = require('ws');
 let wsStream = require('websocket-stream');
 let child_process = require('child_process');
 let path = require('path');
-let GDBWrapper = require('./gdbwrapper')
+let GDBWrapper = require('./gdbmi-wrapper/gdbwrapper');
 
 let server = new ws.Server({port: 8080});
 
