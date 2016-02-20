@@ -45,6 +45,7 @@ GDBWrapper.prototype.init = function (config) {
   try {
     this.gdb_instance = child_process.spawn('gdb',gdb_args,config);
     this.gdb_instance.stdout.pipe(this.outStream);
+    this.gdb_instance.stderr.pipe(this.errStream);
     this.inStream.pipe(this.gdb_instance.stdin);
   } catch (e) {
     console.log("Error starting gdb");
@@ -58,6 +59,10 @@ GDBWrapper.prototype.getInStream = function () {
 
 GDBWrapper.prototype.getOutStream = function () {
   return this.outStream;
+};
+
+GDBWrapper.prototype.getErrStream = function () {
+  return this.errStream;
 };
 
 GDBWrapper.prototype.write = function (data) {
