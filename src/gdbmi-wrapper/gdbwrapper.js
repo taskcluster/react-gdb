@@ -1,23 +1,35 @@
 /*
 basic GDB wrapper
+
+gdbConfig {
+  streamConfig{
+    inStream
+    outStream
+    errStream
+  }
+  cwd
+  exec
+  stdio
+  detached
+}
 */
 var child_process = require('child_process');
 var path = require('path');
 
-function GDBWrapper(config) {
+function GDBWrapper(gdbConfig) {
   this.gdb_instance = null;
-  if(!config){
+  if(!gdbConfig){
     throw("Error. No configuration specified");
   }
-  this.outStream = config.outStream || process.stdout;
-  this.inStream = config.inStream || process.stdin;
-  this.errStream = config.errStream || process.stderr;
-  this.init(config.exec,config.config);
+  this.outStream = gdbConfig.streamConfig.outStream || process.stdout;
+  this.inStream = gdbConfig.streamConfig.inStream || process.stdin;
+  this.errStream = gdbConfig.streamConfig.errStream || process.stderr;
+  this.init(gdbConfig);
 }
 
-GDBWrapper.prototype.init = function (exec,config) {
+GDBWrapper.prototype.init = function (config) {
   var exec,gdb_args;
-  exec = "./"+exec;
+  exec = "./"+ config.exec;
   gdb_args = ["--interpreter=mi","-q"].concat(exec);
   if(config){
     config.cwd = config.cwd || path.join(__dirname,'');

@@ -18,8 +18,12 @@ server.on('connection', socket => {
   let gdb = new GDBWrapper({
     exec:"hello",
     cwd: path.join(__dirname,".."),
-    outStream: stream,
-    inStream: stream
+    streamConfig: {
+      outStream: stream,
+      inStream: stream
+    },
+    detached: true,
+    stdio: ['pipe','pipe','ignore']
   });
   // TODO: We probably have to do some multiplexing... So that we can send
   // stderr to the client two. I don't mean two websockets. I mean sending two
