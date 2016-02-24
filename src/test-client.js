@@ -8,4 +8,3 @@ socket.on('open', () => {
   stream.pipe(process.stdout);
   stream.write('run\n');
 });
-
