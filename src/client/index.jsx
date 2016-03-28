@@ -25,11 +25,19 @@ export class mainComp extends React.Component {
   }
 
   componentWillMount(){
-    this.client = new DockerClient({
-      url: this.props.url,
-      tty: false,
-      command: ['gdb','-q','hello']
+    this.client = null;
+    this.requestPath = $.get('http://localhost:3000/path',(result)=>{
+      let data = JSON.parse(result);
+      this.client = new DockerClient({
+        url: 'http://localhost:'+data.port+ data.path,
+        tty:false,
+        command: ['gdb','-q','hello']
+      });
     });
+  }
+
+  componentWillUnmount(){
+    this.requestPath.abort();
   }
 
   componentDidMount(){

@@ -17,21 +17,22 @@ const PATH = '/'+slugid.v4();
 var dockerServer, container, docker,server,dockerClient;
 //check if docker is running i.e socket is available
 var start = async ()=>{
+  console.log("Process started");
   debug('Process started');
   if(!fs.statSync(DOCKER_SOCKET).isSocket()){
-    debug("Docker is not running");
+    console.log("Docker is not running");
     throw new Error("Docker is not running");
   }
   //Set up the docker server
   docker = new Docker({socketPath:DOCKER_SOCKET});
-  await docker.pull('ubuntu');
+  //await docker.pull('ubuntu');
   container = await docker.createContainer({
     Image:'gdb-test',
-    cmd: ['sleep','600']
+    cmd: ['sleep','infinity']
   });
 
   await container.start();
-  debug("Container started");
+  console.log("Container started");
   server = http.createServer();
   server.listen(PORT);
   debug("Server listening...")
@@ -45,20 +46,23 @@ var start = async ()=>{
   //set up express
   var app = express();
   app.set('views',__dirname+'client');
-  app.set('view engine','jsx');
-  app.engine('jsx',reactViews.createEngine());
   http.createServer(app).listen(3000,()=>{
+    console.log("http server started on port 3000");
     debug("http server started");
   });
-  app.get('/',(req,res)=>{
-    res.render('index',{url:"ws://localhost:"+PORT+PATH});
+  app.get('/path',(req,res)=>{
+    return res.json({
+      port: PORT,
+      path: PATH
+    });
   });
 
-  return new Promise(function(resolve, reject) {
+  return new Promise((resolve, reject)=>{
     dockerServer.on('exit',()=>{
       return resolve();
     });
-    dockerServer.on('error',()=>{
+    dockerServer.on('error',(error)=>{
+      console.log(error);
       return reject();
     });
   });
@@ -71,19 +75,13 @@ var kill = async ()=>{
   debug("Client and server closed");
   await container.remove({v:true,force:true});
   debug("Container removed");
-  return new Promise(function(resolve, reject) {
-    resolve();
-  });
+  return;
 }
 
 var run = async ()=>{
-  debug("Starting dev-server PORT:"+PORT+" PATH:"+PATH);
+  console.log("Starting dev-server PORT:"+PORT+" PATH:"+PATH);
   await start();
   await kill();
-  console.log("Killed");
-  return new Promise(function(resolve, reject) {
-    return resolve();
-  });
+  return;
 }
-
-run().then(()=>{process.exit()});
+Promise.resolve(run());
