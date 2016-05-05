@@ -32,4 +32,4 @@ node_modules
 Session.vim
 
 # Build results
-lib
+static/dist
