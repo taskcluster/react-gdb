@@ -1,4 +1,4 @@
 all: hello
 
 hello: hello.c
-	gcc -g $< -o $@
+	gcc -g $< -o main
