@@ -2,7 +2,7 @@ import ExecClient from 'ws-exec/browser'
 import querystring from 'querystring'
 
 let url = 'ws://localhost:8081/demo?' +
-  querystring.stringify({ tty: true, command: ['gdb', 'main'] })
+  querystring.stringify({ tty: true, command: ['gdb', './guess-game/main'] })
 let client = new ExecClient(url)
 
 client.stdout.on('data', (chunk) => console.log(chunk.toString()))
