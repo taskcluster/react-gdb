@@ -33,3 +33,4 @@ Session.vim
 
 # Build results
 static/dist
+demo/examples/*/main
