@@ -1,9 +1,6 @@
 [submodule "modules/ws-exec"]
 	path = modules/ws-exec
 	url = https://github.com/baygeldin/ws-exec.git
-[submodule "modules/gdb-state"]
-	path = modules/gdb-state
-	url = https://github.com/baygeldin/gdb-state.git
 [submodule "modules/gdb-js"]
 	path = modules/gdb-js
 	url = https://github.com/baygeldin/gdb-js.git
