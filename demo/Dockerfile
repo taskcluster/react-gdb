@@ -5,6 +5,5 @@ RUN apt-get update && apt-get install -y \
     make
 COPY examples /examples/
 WORKDIR /examples
-WORKDIR hello-world
-RUN make
-WORKDIR /examples
+RUN make -C hello-world
+RUN make -C guess-game
