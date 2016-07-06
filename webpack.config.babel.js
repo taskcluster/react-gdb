@@ -3,21 +3,18 @@ import path from 'path'
 
 let PRODUCTION = process.env.NODE_ENV === 'production'
 
-module.exports = {
-  context: path.join(__dirname, 'src'),
+module.exports = [{
+  context: path.join(__dirname, 'example')
 
-  entry: './index.js',
+  entry: './client.jsx',
 
   output: {
-    path: path.join(__dirname, 'static/dist'),
+    path: path.join(__dirname, 'example/static'),
     filename: 'bundle.js'
   },
 
   plugins: [
-    new webpack.NoErrorsPlugin(),
-    new webpack.DefinePlugin({
-      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-    })
+    new webpack.NoErrorsPlugin()
   ],
 
   module: {
@@ -26,14 +23,15 @@ module.exports = {
       loader: 'babel',
       exclude: /node_modules/
     }, {
-      test: PRODUCTION ? /node_modules\/(ws|debug|assert)\// : /node_modules\/(ws)\//,
+      test: /node_modules\/(react|ws)\//,
       loader: 'null'
     }]
   },
 
-  devtool: PRODUCTION ? 'source-map' : 'eval-source-maps',
+  devtool: 'eval-source-map',
 
   watchOptions: {
     aggregateTimeout: 100
   }
-}
+}, {
+}]
