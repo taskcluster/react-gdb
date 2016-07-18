@@ -1,4 +1,4 @@
-import { PROMISE } from './promise'
+import { PROMISE } from './promise.js'
 
 export const ASYNC = Symbol('async')
 
@@ -12,6 +12,6 @@ export let asyncMiddleware = store => next => action => {
   let fn = action[ASYNC]
   if (!fn) return next(action)
 
-  return { type, inline, [PROMISE]: fn() }
+  return next({ type, inline, [PROMISE]: fn() })
 }
 

@@ -1,4 +1,4 @@
-import { FAILURE, REQUEST } from '../constants'
+import { FAILURE, REQUEST } from '../constants.js'
 
 export const PROMISE = Symbol('promise')
 
@@ -19,13 +19,13 @@ export let promiseMiddleware = store => next => action => {
   let promise = action[PROMISE]
   if (!promise) return next(action)
 
-  return {
+  return next({
     type: REQUEST,
     action: type,
     promise: promise.then(
       (result) => inline ? next({ ...result, type }) : next({ result, type }),
       (error) => next({ error, action: type, type: FAILURE })
     )
-  }
+  })
 }
 
