@@ -62,20 +62,12 @@ let defaultConfig = {
 let libConfig = merge.smart({
   context: path.resolve('src'),
 
-  entry: ['babel-polyfill', './index.jsx'],
+  entry: './index.jsx',
 
   output: {
     path: path.resolve('lib'),
     filename: 'index.js',
     libraryTarget: 'commonjs2'
-  },
-  module: {
-    // TODO: gdb-js sourcemaps
-    /* preLoaders: [{
-      test: /\.js$/,
-      loader: 'source-map',
-      include: path.resolve('gdb-js')
-    }] */
   },
 
   externals: [nodeExternals()],
@@ -88,7 +80,7 @@ let libConfig = merge.smart({
 let exampleConfig = merge.smart({
   context: path.resolve('example'),
 
-  entry: './client.jsx',
+  entry: ['babel-polyfill', './client.jsx'],
 
   output: {
     path: path.resolve('example/static/dist'),
@@ -99,7 +91,7 @@ let exampleConfig = merge.smart({
     preLoaders: [{
       test: /\.js$/,
       loader: 'source-map',
-      include: path.resolve('lib')
+      include: [path.resolve('lib'), path.resolve('node_modules/gdb-js/lib')]
     }]
   },
 
