@@ -5,33 +5,12 @@ import nodeExternals from 'webpack-node-externals'
 import ExtractTextPlugin from 'extract-text-webpack-plugin'
 import precss from 'precss'
 import autoprefixer from 'autoprefixer'
-import HappyPack from 'happypack'
-
-// TODO:
-// optimize build time: HappyPack, webpack-dev-server, DLL
 
 const PRODUCTION = process.env.NODE_ENV === 'production'
-
-let threadPool = HappyPack.ThreadPool({ size: 4 })
 
 let defaultConfig = {
   plugins: [
     new webpack.NoErrorsPlugin(),
-    new HappyPack({
-      id: 'styles',
-      threadPool,
-      loaders: [`css?${PRODUCTION ? 'minimize&' : ''}modules&importLoaders=1!postcss`]
-    }),
-    new HappyPack({
-      id: 'scripts',
-      threadPool,
-      loaders: ['babel']
-    }),
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-      }
-    })
   ],
 
   watchOptions: {
@@ -45,18 +24,19 @@ let defaultConfig = {
     }],
     loaders: [{
       test: /\.(js|jsx)$/,
-      loader: 'happypack/loader?id=scripts',
+      loader: 'babel',
       exclude: /node_modules/
     }, {
       test: /\.css$/,
-      loader: ExtractTextPlugin.extract('style', 'happypack/loader?id=styles'),
+      loader: ExtractTextPlugin.extract('style',
+        `css?${PRODUCTION ? 'minimize&' : ''}modules&importLoaders=1!postcss`),
       exclude: /node_modules/
     }]
   },
 
   postcss: () => [precss, autoprefixer],
 
-  devtool: 'source-map' // PRODUCTION ? 'source-map' : 'eval'
+  devtool: 'source-map'
 }
 
 let libConfig = merge.smart({
@@ -95,6 +75,34 @@ let exampleConfig = merge.smart({
     }]
   },
 
+  plugins: [
+    new webpack.DllReferencePlugin({
+      context: __dirname,
+      manifest: require('./example/dll-manifest.json')
+    })
+  ]
+}, defaultConfig)
+
+let dllConfig = {
+  entry: {
+    dll: ['babel-polyfill', 'react', 'react-dom', 'react-redux',
+      'redux', 'immutable', 'docker-exec-websocket-server/browser',
+      'react-immutable-proptypes', 'brace']
+  },
+
+  output: {
+    path: path.resolve('example/static/dist'),
+    filename: '[name].js',
+    library: '[name]_[hash]'
+  },
+
+  plugins: [
+    new webpack.DllPlugin({
+      path: path.resolve('example/[name]-manifest.json'),
+      name: '[name]_[hash]'
+    })
+  ],
+
   // XXX: it's a hack to avoid errors caused by
   // docker-exec-websocket-server which requires
   // server-side `ws` package in the client-side code
@@ -104,16 +112,10 @@ let exampleConfig = merge.smart({
       'ws': 'empty-module'
     }
   },
+}
 
-  plugins: [
-    new webpack.DefinePlugin({
-      'process.env': {
-        'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
-      }
-    })
-  ]
-}, defaultConfig)
-
-export default process.env.CONFIG === 'lib' ? libConfig
-  : process.env.CONFIG === 'example' ? exampleConfig : [libConfig, exampleConfig]
+export default process.env.CONFIG === 'dll' ? dllConfig
+  : process.env.CONFIG === 'lib' ? libConfig
+  : process.env.CONFIG === 'example' ? exampleConfig
+  : [libConfig, exampleConfig]
 
