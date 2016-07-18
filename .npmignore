@@ -32,5 +32,10 @@ node_modules
 Session.vim
 
 # Build results
-example/static/dist/
-lib/
+example/
+docs
+test
+.babelrc
+.editorconfig
+webpack.config.babel.js
+
