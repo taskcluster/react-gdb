@@ -1,37 +1,108 @@
-import webpack from 'webpack'
 import path from 'path'
+import webpack from 'webpack'
+import merge from 'webpack-merge'
+import nodeExternals from 'webpack-node-externals'
+import ExtractTextPlugin from 'extract-text-webpack-plugin'
+import precss from 'precss'
+import autoprefixer from 'autoprefixer'
 
-let PRODUCTION = process.env.NODE_ENV === 'production'
+// TODO: uglify assets (only in production mode!),
+// optimize build time (CommonsChunk?), HappyPack
 
-module.exports = [{
-  context: path.join(__dirname, 'example')
+const PRODUCTION = process.env.NODE_ENV === 'production'
 
-  entry: './client.jsx',
-
-  output: {
-    path: path.join(__dirname, 'example/static'),
-    filename: 'bundle.js'
-  },
-
+let defaultConfig = {
   plugins: [
     new webpack.NoErrorsPlugin()
   ],
 
+  watchOptions: {
+    aggregateTimeout: 100
+  },
+
   module: {
+    preLoaders: [{
+      test: /\.json$/,
+      loader: 'json'
+    }],
     loaders: [{
-      test: /\.js$/,
+      test: /\.(js|jsx)$/,
       loader: 'babel',
       exclude: /node_modules/
     }, {
-      test: /node_modules\/(react|ws)\//,
-      loader: 'null'
+      test: /\.css$/,
+      loader: ExtractTextPlugin.extract('style', 'css?modules&importLoaders=1!postcss')
     }]
   },
 
-  devtool: 'eval-source-map',
+  postcss: () => [precss, autoprefixer],
 
-  watchOptions: {
-    aggregateTimeout: 100
-  }
-}, {
-}]
+  devtool: 'source-map' // PRODUCTION ? 'source-map' : 'eval'
+}
+
+let libConfig = merge.smart({
+  context: path.resolve('src'),
+
+  entry: ['babel-polyfill', './index.jsx'],
+
+  output: {
+    path: path.resolve('lib'),
+    filename: 'index.js',
+    libraryTarget: 'commonjs2'
+  },
+  module: {
+    // TODO: gdb-js sourcemaps
+    /* preLoaders: [{
+      test: /\.js$/,
+      loader: 'source-map',
+      include: path.resolve('gdb-js')
+    }] */
+  },
+
+  externals: [nodeExternals()],
+
+  plugins: [
+    new ExtractTextPlugin('assets/style.css', { allChunks: true })
+  ]
+}, defaultConfig)
+
+let exampleConfig = merge.smart({
+  context: path.resolve('example'),
+
+  entry: './client.jsx',
+
+  output: {
+    path: path.resolve('example/static/dist'),
+    filename: 'bundle.js'
+  },
+
+  module: {
+    preLoaders: [{
+      test: /\.js$/,
+      loader: 'source-map',
+      include: path.resolve('lib')
+    }]
+  },
+
+  // XXX: it's a hack to avoid errors caused by
+  // docker-exec-websocket-server which requires
+  // server-side `ws` package in the client-side code
+  // TODO: Send a PR.
+  resolve: {
+    alias: {
+      'ws': 'empty-module'
+    }
+  },
+
+  plugins: [
+    new webpack.DefinePlugin({
+      'process.env': {
+        'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+      }
+    })
+  ]
+}, defaultConfig)
+
+export default process.env.CONFIG === 'lib' ? libConfig
+  : process.env.CONFIG === 'example' ? exampleConfig : [libConfig, exampleConfig]
+
