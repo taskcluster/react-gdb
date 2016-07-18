@@ -5,15 +5,33 @@ import nodeExternals from 'webpack-node-externals'
 import ExtractTextPlugin from 'extract-text-webpack-plugin'
 import precss from 'precss'
 import autoprefixer from 'autoprefixer'
+import HappyPack from 'happypack'
 
-// TODO: uglify assets (only in production mode!),
-// optimize build time (CommonsChunk?), HappyPack
+// TODO:
+// optimize build time: HappyPack, webpack-dev-server, DLL
 
 const PRODUCTION = process.env.NODE_ENV === 'production'
 
+let threadPool = HappyPack.ThreadPool({ size: 4 })
+
 let defaultConfig = {
   plugins: [
-    new webpack.NoErrorsPlugin()
+    new webpack.NoErrorsPlugin(),
+    new HappyPack({
+      id: 'styles',
+      threadPool,
+      loaders: [`css?${PRODUCTION ? 'minimize&' : ''}modules&importLoaders=1!postcss`]
+    }),
+    new HappyPack({
+      id: 'scripts',
+      threadPool,
+      loaders: ['babel']
+    }),
+    new webpack.DefinePlugin({
+      'process.env': {
+        'NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+      }
+    })
   ],
 
   watchOptions: {
@@ -27,11 +45,12 @@ let defaultConfig = {
     }],
     loaders: [{
       test: /\.(js|jsx)$/,
-      loader: 'babel',
+      loader: 'happypack/loader?id=scripts',
       exclude: /node_modules/
     }, {
       test: /\.css$/,
-      loader: ExtractTextPlugin.extract('style', 'css?modules&importLoaders=1!postcss')
+      loader: ExtractTextPlugin.extract('style', 'happypack/loader?id=styles'),
+      exclude: /node_modules/
     }]
   },
 
