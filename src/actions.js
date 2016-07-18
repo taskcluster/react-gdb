@@ -1,14 +1,15 @@
-import { ASYNC } from './middleware/async'
-import { PROMISE } from './middleware/promise'
+import { ASYNC } from './middleware/async.js'
+import { PROMISE } from './middleware/promise.js'
 import { INIT, UPDATE, FETCH, RUN, CONTINUE,
   STEP_IN, STEP_OUT, NEXT, OPEN_FILE,
   CLOSE_FILE, SELECT_THREAD, ADD_THREAD,
-  REMOVE_THREAD } from './constants'
+  REMOVE_THREAD, ADD_BREAK, REMOVE_BREAK } from './constants.js'
 
 export default (gdb, getSource) => ({
   init: () => ({
     type: INIT,
-    [ASYNC]: async () {
+    [ASYNC]: async () => {
+      await gdb.init()
       await gdb.enableAsync()
       let files = await gdb.sourceFiles()
       return { files }
@@ -17,36 +18,36 @@ export default (gdb, getSource) => ({
 
   update: (data) => ({
     type: UPDATE,
-    [ASYNC]: async () {
+    [ASYNC]: async () => {
       let thread = data['thread-id']
       let callstack = await gdb.callstack(thread)
       let vars = await gdb.vars(thread)
-      let file = data.frame.fullname
+      let filename = data.frame.fullname
       let line = data.frame.line
-      return { thread, callstack, vars, file, line }
+      return { thread, callstack, vars, filename, line }
     }
   }),
 
   fetch: (file) => ({
     type: FETCH,
-    [ASYNC]: async () {
+    [ASYNC]: async () => {
       let src = await getSource(file)
       return { file, src }
     }
   }),
 
   addBreak: (file, pos, thread) => ({
-    type: BREAK_ADD,
+    type: ADD_BREAK,
     [PROMISE]: gdb.break(file, pos, thread)
   }),
 
   removeBreak: (id) => ({
-    type: BREAK_REMOVE,
+    type: REMOVE_BREAK,
     [ASYNC]: async () => {
       await gdb.removeBreak(id)
       return { id }
     }
-  })
+  }),
 
   run: () => ({
     type: RUN,
@@ -91,7 +92,7 @@ export default (gdb, getSource) => ({
   selectThread: (thread) => ({
     type: SELECT_THREAD,
     thread
-  })
+  }),
 
   addThread: (data) => ({
     type: ADD_THREAD,
