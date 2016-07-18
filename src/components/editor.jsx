@@ -1,9 +1,8 @@
 import React from 'react'
 import ImmutablePropTypes from 'react-immutable-proptypes'
-import AceEditor from 'react-ace'
+import AceEditor from './ace.jsx' // 'react-ace'
 import 'brace/mode/c_cpp'
 import 'brace/theme/github'
-
 
 class Editor extends React.Component {
   constructor (props) {
@@ -22,11 +21,11 @@ class Editor extends React.Component {
   render () {
     let line = this.props.line
     let editor = (
-      <AceEditor mode="c_cpp" theme="github" name="reactgdb-ace-editor"
-        value={this.props.text}  readonly={true}
+      <AceEditor mode='c_cpp' theme='github' name='reactgdb-ace-editor'
+        value={this.props.text} readonly
         markers={line ? [{ startRow: line, endRow: line + 1,
-          className: 'reactgdb-ace-marker', type: 'background' }]}
-        onGutterMouseDown={(e) => onLineClick(e.getDocumentPosition().row)}/>
+          className: 'reactgdb-ace-marker', type: 'background' }] : []}
+        onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row)} />
     )
     let filler = <span>Loading, please wait</span>
     return this.props.text ? editor : filler
@@ -34,13 +33,13 @@ class Editor extends React.Component {
 }
 
 Editor.propTypes = {
-  line: React.propTypes.number
-  text: React.propTypes.string,
-  breaks: ImmutablePropTypes.listOf(React.propTypes.number).isRequired,
-  visible: React.propTypes.bool.isRequired,
-  fetchFile: React.propTypes.func.isRequired,
-  addBreak: React.propTypes.func.isRequired
-  removeBreak: React.propTypes.func.isRequired
+  line: React.PropTypes.number,
+  text: React.PropTypes.string,
+  breaks: ImmutablePropTypes.listOf(React.PropTypes.number).isRequired,
+  visible: React.PropTypes.bool.isRequired,
+  fetchFile: React.PropTypes.func.isRequired,
+  addBreak: React.PropTypes.func.isRequired,
+  removeBreak: React.PropTypes.func.isRequired
 }
 
 export default Editor
