@@ -2,11 +2,11 @@
 
 import React from 'react'
 import { render } from 'react-dom'
-import ReactGDB from '../lib'
 import ExecClient from 'docker-exec-websocket-server/browser'
+import ReactGDB from 'react-gdb'
 
 let client = new ExecClient({
-  url: 'ws://localhost:8080/docker-exec',
+  url: 'ws://localhost:9090/docker-exec',
   command: ['gdb', '-i=mi', '-tty=/dev/null', 'tickets/main'],
   tty: false
 })
