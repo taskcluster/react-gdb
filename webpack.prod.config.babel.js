@@ -43,7 +43,7 @@ export default {
     }]
   },
 
-  externals: [nodeExternals()],
+  externals: [nodeExternals(), 'gdb-js'],
 
   postcss: () => [precss, autoprefixer],
 
