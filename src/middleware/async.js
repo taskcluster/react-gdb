@@ -7,11 +7,9 @@ export const ASYNC = Symbol('async')
  * It maps the action with an async function to action with a promise.
  */
 export let asyncMiddleware = store => next => action => {
-  let type = action.type
-  let inline = action.inline
   let fn = action[ASYNC]
   if (!fn) return next(action)
 
-  return next({ type, inline, [PROMISE]: fn() })
+  return next({ ...action, [PROMISE]: fn() })
 }
 

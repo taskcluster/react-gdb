@@ -1,107 +1,142 @@
+import { bindActionCreators } from 'redux'
 import { ASYNC } from './middleware/async.js'
 import { PROMISE } from './middleware/promise.js'
-import { INIT, UPDATE, FETCH, RUN, CONTINUE,
-  STEP_IN, STEP_OUT, NEXT, OPEN_FILE,
-  CLOSE_FILE, SELECT_THREAD, ADD_THREAD,
+import { INIT, UPDATE, FETCH, RUN, PROCEED, FOCUS,
+  STEP_IN, STEP_OUT, NEXT, OPEN_FILE, INTERRUPT,
+  CLOSE_FILE, SELECT_THREAD, ADD_THREAD, GET_SOURCES,
   REMOVE_THREAD, ADD_BREAK, REMOVE_BREAK } from './constants.js'
 
-export default (gdb, getSource) => ({
-  init: () => ({
+export default (gdb, fetchFile, basePath, dispatch) => {
+  let getSources = () => ({
+    type: GET_SOURCES,
+    [ASYNC]: async () => {
+      return (await gdb.sourceFiles())
+        .filter((f) => f.fullname.startsWith(basePath))
+    }
+  })
+
+  let init = () => ({
     type: INIT,
     [ASYNC]: async () => {
       await gdb.init()
       await gdb.enableAsync()
-      let files = await gdb.sourceFiles()
-      return { files }
+      dispatch(getSources())
     }
-  }),
+  })
 
-  update: (data) => ({
+  let exit = () => ({
+    type: EXIT,
+    [PROMISE]: gdb.exit()
+  })
+
+  let update = (data) => ({
     type: UPDATE,
+    inline: true,
     [ASYNC]: async () => {
-      let thread = data['thread-id']
+      // TODO: below should be done by gdb-js
+      let thread = parseInt(data['thread-id'], 10)
       let callstack = await gdb.callstack(thread)
-      let vars = await gdb.vars(thread)
+      let context = await gdb.context(thread)
       let filename = data.frame.fullname
-      let line = data.frame.line
-      return { thread, callstack, vars, filename, line }
+      let line = parseInt(data.frame.line, 10)
+      return { thread, callstack, context, filename, line }
     }
-  }),
+  })
 
-  fetch: (file) => ({
+  let fetch = (file) => ({
     type: FETCH,
-    [ASYNC]: async () => {
-      let src = await getSource(file)
-      return { file, src }
-    }
-  }),
+    file,
+    [PROMISE]: fetchFile(file)
+  })
 
-  addBreak: (file, pos, thread) => ({
+  let addBreak = (file, pos, thread) => ({
     type: ADD_BREAK,
-    [PROMISE]: gdb.break(file, pos, thread)
-  }),
+    [PROMISE]: gdb.addBreak(file, pos, thread)
+  })
 
-  removeBreak: (id) => ({
+  let removeBreak = (id) => ({
     type: REMOVE_BREAK,
-    [ASYNC]: async () => {
-      await gdb.removeBreak(id)
-      return { id }
-    }
-  }),
+    id,
+    [PROMISE]: gdb.removeBreak(id)
+  })
 
-  run: () => ({
+  let run = () => ({
     type: RUN,
-    inline: false,
     [PROMISE]: gdb.run()
-  }),
+  })
 
-  continue: (thread) => ({
-    type: CONTINUE,
-    inline: false,
-    [PROMISE]: gdb.continue(thread)
-  }),
+  let proceed = (thread) => ({
+    type: PROCEED,
+    thread,
+    [PROMISE]: gdb.proceed(thread)
+  })
 
-  stepIn: (thread) => ({
+  let interrupt = (thread) => ({
+    type: INTERRUPT,
+    [PROMISE]: gdb.interrupt(thread)
+  })
+
+  let stepIn = (thread) => ({
     type: STEP_IN,
-    inline: false,
     [PROMISE]: gdb.stepIn(thread)
-  }),
+  })
 
-  stepOut: (thread) => ({
+  let stepOut = (thread) => ({
     type: STEP_OUT,
-    inline: false,
     [PROMISE]: gdb.stepOut(thread)
-  }),
+  })
 
-  next: (thread) => ({
+  let next = (thread) => ({
     type: NEXT,
-    inline: false,
     [PROMISE]: gdb.next(thread)
-  }),
+  })
 
-  openFile: (file) => ({
+  let openFile = (file) => ({
     type: OPEN_FILE,
     file
-  }),
+  })
 
-  closeFile: (file) => ({
+  let closeFile = (file) => ({
     type: CLOSE_FILE,
     file
-  }),
+  })
 
-  selectThread: (thread) => ({
+  let selectThread = (thread) => ({
     type: SELECT_THREAD,
     thread
-  }),
+  })
 
-  addThread: (data) => ({
+  let focus = (file, line) => ({
+    type: FOCUS,
+    file,
+    line
+  })
+
+  let addThread = (data) => ({
     type: ADD_THREAD,
     id: data.id,
     gid: data['group-id']
-  }),
+  })
 
-  removeThread: (data) => ({
+  let removeThread = (data) => ({
     type: REMOVE_THREAD,
     id: data.id
   })
-})
+
+  let attachTarget = (pid) => ({
+    type: ATTACH_TARGET,
+    [ASYNC]: async () => {
+      await gdb.attach(pid)
+      dispatch(getSources())
+    }
+  })
+
+  return bindActionCreators({
+    init, exit, update, fetch,
+    addBreak, removeBreak, run, proceed,
+    interrupt, stepIn, stepOut, next,
+    openFile, closeFile, selectThread, focus,
+    addThread, removeThread, attachTarget
+  }, dispatch)
+}
+

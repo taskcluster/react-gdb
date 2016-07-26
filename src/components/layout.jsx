@@ -1,6 +1,6 @@
 import React from 'react'
 import ImmutablePropTypes from 'react-immutable-proptypes'
-import { Map } from 'immutable'
+import { FramePropType, FilesPropType, BreaksPropType } from './common.js'
 import Sources from './sources.jsx'
 import Controls from './controls.jsx'
 import styles from './layout.css'
@@ -10,44 +10,84 @@ class Layout extends React.Component {
     this.props.init()
   }
 
+  componentWillUnmount () {
+    this.props.exit()
+  }
+
   render () {
-    let { UIState, breaks, threads, sources } = this.props
-    let { openFile, selectThread, addBreak, removeBreak,
-      closeFile, fetch, next, run, stepOut, stepIn } = this.props
-    let thread = UIState.get('selectedThread')
-    let files = UIState.get('openedFiles')
-    let data = (new Map()).withMutations((map) => {
-      files.forEach((f) => {
-        let file = sources.get(f)
-        // XXX: `let breaks = breaks.withMutations...` won't work here!
-        // Scoping problem? Why?
-        let breaksList = breaks.withMutations((map) => {
-          map.filter((b) => b.get('file') === f)
-            .filter((b) => b.get('thread') === thread || b.get('thread') === 'all')
-        }).toList().map((b) => b.get('line'))
-        map.set(f, new Map({ file, breaks: breaksList }))
-      })
-    })
-    let frame = thread ? threads.get(thread).get('frame') : null
+    let { files, thread, threads, sources, frame } = this.props
+    let { openFile, selectThread, addBreak, removeBreak, interrupt, proceed,
+      closeFile, fetch, next, run, stepOut, stepIn, focus } = this.props
+
+    let threadId = thread ? thread.get('id') : null
+
+    // TODO: split this file to separate components
 
     let sourcesList = []
     sources.forEach((value, key) => {
-      sourcesList.push(<div key={key}><a href="#" onClick={() => openFile(key)}>{key}</a></div>)
+      sourcesList.push(
+        <div key={key}>
+          <a href="#" onClick={() => openFile(key)}>
+            {key}
+          </a>
+        </div>
+      )
     })
 
     let threadsList = []
     threads.forEach((value, key) => {
-      threadsList.push(<div key={key}><a href="#" onClick={() => selectThread(key)}>{key}</a></div>)
+      let clickHandler = () => {
+        let frame = value.get('frame')
+        selectThread(key)
+        focus(frame.get('file'), frame.get('line'))
+      }
+
+      threadsList.push(
+        <div key={key}>
+          <a href="#" onClick={clickHandler}>
+            {`id: ${key}, group: ${value.get('gid')}, status: ${value.get('status')}`}
+          </a>
+        </div>
+      )
     })
 
-    let addBreakToCurrentThread = (file, pos) => {
-      addBreak(file, pos, thread)
+    let context = []
+    let callstack = []
+    let breaks = []
+    if (thread) {
+      thread.get('context').forEach((value, key) => {
+        context.push(
+          <div key={key}>
+            <b>{value.scope}</b> {value.type} {value.name} = {value.value}
+          </div>
+        )
+      })
+
+      thread.get('callstack').forEach((value, key) => {
+        callstack.push(
+          <div key={key}>
+            <b>level {value.level}:</b><br />
+            <a href="#" onClick={() => { focus(value.fullname, parseInt(value.line, 10)) }}>
+              file {value.fullname}, line {value.line}
+            </a>
+          </div>
+        )
+      })
+
+      thread.get('breaks').forEach((value, key) => {
+        breaks.push(
+          <div key={key}>
+            <a href="#" onClick={() => { focus(value.get('file'), value.get('line')) }}>
+              file {value.get('file')}, line {value.get('line')}
+            </a>, thread {value.get('thread')}
+          </div>
+        )
+      })
     }
 
-    let removeBreakFromCurrentThread = (file, pos) => {
-      let id = breaks.findKey((value, key) =>
-        value.equals({ file, line: pos, thread }))
-      removeBreak(id)
+    // If the third argument is `true`, break is added to all threads.
+    let addBreakToCurrentThread = (file, pos, addToAll) => {
+      addToAll ? addBreak(file, pos) : addBreak(file, pos, threadId)
     }
 
     return (
@@ -59,37 +99,79 @@ class Layout extends React.Component {
           {threadsList}
         </div>
         <div className={styles.content}>
-          <Sources files={files} data={data} frame={frame}
+          <Sources files={files}
+            threadFrame={thread ? thread.get('frame') : null}
+            focusedFrame={frame}
             openFile={openFile}
             closeFile={closeFile}
             fetchFile={fetch}
-            removeBreak={removeBreakFromCurrentThread}
+            removeBreak={removeBreak}
             addBreak={addBreakToCurrentThread} />
         </div>
         <div className={`${styles.column} ${styles.right}`}>
-          <Controls next={() => next(thread)}
-            run={() => run(thread)}
-            continue={() => this.props.continue(thread)/* TODO: change name */}
-            stepOut={() => stepOut(thread)}
-            stepIn={() => stepIn(thread)} />
+          <Controls next={() => next(threadId)}
+            interrupt={() => interrupt(threadId)}
+            proceed={() => thread ? proceed(threadId) : run()}
+            stepOut={() => stepOut(threadId)}
+            stepIn={() => stepIn(threadId)}
+            status={thread ? thread.get('status') : 'idle'} />
           <h1>Context</h1>
-          {thread ? JSON.stringify(threads.get(thread).get('vars').toJS()) : 'no vars yet'}
+          {thread ? context : 'no thread selected'}
           <h1>Callstack</h1>
-          {thread ? JSON.stringify(threads.get(thread).get('callstack').toJS()) : 'no callstack yet'}
+          {thread ? callstack : 'no thread selected'}
           <h1>Breakpoints</h1>
-          {JSON.stringify(breaks.filter((b) => b.get('thread') === thread || b.get('thread') === 'all').toJS())}
+          {thread ? breaks : 'no thread selected'}
         </div>
       </div>
     )
   }
 }
 
-// TODO: concretize + add actions propTypes
 Layout.propTypes = {
-  UIState: ImmutablePropTypes.map.isRequired,
-  breaks: ImmutablePropTypes.map.isRequired,
-  threads: ImmutablePropTypes.map.isRequired,
-  sources: ImmutablePropTypes.map.isRequired
+  files: FilesPropType.isRequired,
+  thread: ImmutablePropTypes.mapContains({
+    id: React.PropTypes.number.isRequired,
+    breaks: BreaksPropType.isRequired,
+    callstack: ImmutablePropTypes.listOf(
+      React.PropTypes.shape({
+        fullname: React.PropTypes.string.isRequired,
+        line: React.PropTypes.number.isRequired
+      })
+    ).isRequired,
+    context: ImmutablePropTypes.listOf(
+      React.PropTypes.shape({
+        scope: React.PropTypes.string.isRequired,
+        type: React.PropTypes.string.isRequired,
+        name: React.PropTypes.string.isRequired,
+        value: React.PropTypes.string.isRequired
+      })
+    ).isRequired,
+    status: React.PropTypes.string.isRequired,
+    frame: FramePropType.isRequired
+  }),
+  threads: ImmutablePropTypes.mapOf(
+    ImmutablePropTypes.contains({
+      status: React.PropTypes.string.isRequired,
+      gid: React.PropTypes.string.isRequired
+    })
+  ).isRequired,
+  sources: ImmutablePropTypes.map.isRequired,
+  frame: FramePropType,
+  init: React.PropTypes.func.isRequired,
+  exit: React.PropTypes.func.isRequired,
+  fetch: React.PropTypes.func.isRequired,
+  addBreak: React.PropTypes.func.isRequired,
+  removeBreak: React.PropTypes.func.isRequired,
+  run: React.PropTypes.func.isRequired,
+  proceed: React.PropTypes.func.isRequired,
+  interrupt: React.PropTypes.func.isRequired,
+  stepIn: React.PropTypes.func.isRequired,
+  stepOut: React.PropTypes.func.isRequired,
+  next: React.PropTypes.func.isRequired,
+  openFile: React.PropTypes.func.isRequired,
+  closeFile: React.PropTypes.func.isRequired,
+  selectThread: React.PropTypes.func.isRequired,
+  focus: React.PropTypes.func.isRequired
 }
 
 export default Layout

@@ -59,6 +59,7 @@
     "postcss-loader": "^0.9.1",
     "precss": "^1.4.0",
     "react-dom": "^15.2.1",
+    "redux-thunk": "^2.1.0",
     "snazzy": "^4.0.0",
     "source-map-loader": "^0.1.5",
     "source-map-support": "^0.4.2",
@@ -69,12 +70,15 @@
     "webpack-node-externals": "^1.2.0"
   },
   "dependencies": {
+    "debug": "^2.2.0",
     "brace": "^0.8.0",
     "immutable": "^3.8.1",
+    "lodash.isequal": "^4.2.0",
     "react": "^15.2.1",
     "react-immutable-proptypes": "^1.7.1",
     "react-redux": "^4.4.5",
-    "redux": "^3.5.2"
+    "redux": "^3.5.2",
+    "reselect": "^2.5.3"
   },
   "standard": {
     "parser": "babel-eslint"

@@ -1,41 +1,48 @@
 import React from 'react'
 import ImmutablePropTypes from 'react-immutable-proptypes'
+import { BreaksPropType } from './common.js'
 import AceEditor from './ace.jsx' // 'react-ace'
 import 'brace/mode/c_cpp'
 import 'brace/theme/github'
 
 class Editor extends React.Component {
-  constructor (props) {
-    super(props)
+  componentDidMount () {
     if (!this.props.text) this.props.fetchFile()
   }
 
   onLineClick (line) {
     if (this.props.breaks.has(line)) {
-      this.props.removeBreak(line)
+      let id = this.props.breaks.findKey((b) => b.get('line') === line)
+      this.props.removeBreak(id)
     } else {
       this.props.addBreak(line)
     }
   }
 
   render () {
-    let line = this.props.line
+    let { highlight, focus, text, breaks, visible } = this.props
+
     let editor = (
-      <AceEditor mode='c_cpp' theme='github' name='reactgdb-ace-editor'
-        value={this.props.text} readonly
-        markers={line ? [{ startRow: line, endRow: line + 1,
-          className: 'reactgdb-ace-marker', type: 'background' }] : []}
-        onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row)} />
+      // TODO: implement `focus` and `onGutterMouseDown` properties
+      <div style={{ display: visible ? 'block' : 'none' }}>
+        <AceEditor mode='c_cpp' theme='github' name='reactgdb-ace-editor'
+          value={text} readonly focus={focus}
+          markers={highlight ? [{ startRow: highlight, endRow: highlight + 1,
+            className: 'reactgdb-ace-marker', type: 'background' }] : []}
+          onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row)} />
+      </div>
     )
-    let filler = <span>Loading, please wait</span>
-    return this.props.text ? editor : filler
+    let filler = <span>Loading, please wait...</span>
+
+    return text ? editor : filler
   }
 }
 
 Editor.propTypes = {
-  line: React.PropTypes.number,
+  highlight: React.PropTypes.number,
+  focus: React.PropTypes.number,
   text: React.PropTypes.string,
-  breaks: ImmutablePropTypes.listOf(React.PropTypes.number).isRequired,
+  breaks: BreaksPropType.isRequired,
   visible: React.PropTypes.bool.isRequired,
   fetchFile: React.PropTypes.func.isRequired,
   addBreak: React.PropTypes.func.isRequired,

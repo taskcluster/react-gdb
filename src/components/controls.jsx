@@ -2,13 +2,17 @@ import React from 'react'
 
 class Controls extends React.Component {
   render () {
+    let { proceed, interrupt, next, stepIn,
+      status, stepOut } = this.props
+    let flowButton = status === 'running'
+      ? <a href="#" onClick={interrupt}>Pause</a>
+      : <a href="#" onClick={proceed}>{status === 'idle' ? 'Run' : 'Continue'}</a>
     return (
       <div>
-        <a href="#" onClick={this.props.next}>Next</a>|
-        <a href="#" onClick={this.props.run}>Run</a>|
-        <a href="#" onClick={this.props.continue}>Continue</a>|
-        <a href="#" onClick={this.props.stepOut}>Step Out</a>|
-        <a href="#" onClick={this.props.stepIn}>Step In</a>|
+        {flowButton}|
+        <a href="#" onClick={next}>Next</a>|
+        <a href="#" onClick={stepOut}>Step Out</a>|
+        <a href="#" onClick={stepIn}>Step In</a>|
       </div>
     )
   }
@@ -16,10 +20,11 @@ class Controls extends React.Component {
 
 Controls.propTypes = {
   next: React.PropTypes.func.isRequired,
-  run: React.PropTypes.func.isRequired,
-  continue: React.PropTypes.func.isRequired,
+  interrupt: React.PropTypes.func.isRequired,
+  proceed: React.PropTypes.func.isRequired,
   stepOut: React.PropTypes.func.isRequired,
-  stepIn: React.PropTypes.func.isRequired
+  stepIn: React.PropTypes.func.isRequired,
+  status: React.PropTypes.string.isRequired
 }
 
 export default Controls

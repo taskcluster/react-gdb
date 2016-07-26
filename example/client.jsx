@@ -11,13 +11,16 @@ let client = new ExecClient({
   tty: false
 })
 
-async function getFile (filename) {
-  if (filename.startsWith('/examples')) {
-    let link = 'https://raw.githubusercontent.com/baygeldin/gdb-examples/master' + filename
-    let res = await fetch(link)
-    return await res.text()
-  } else {
-    throw new Error('Not a project file!')
+let sourceProvider = {
+  basePath: '/examples/tickets',
+  fetch: async (filename) => {
+    try {
+      let base = 'https://raw.githubusercontent.com/baygeldin/gdb-examples/master'
+      let res = await fetch(base + filename)
+      return await res.text()
+    } catch (e) {
+      throw new Error('Not a project file!')
+    }
   }
 }
 
@@ -26,7 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // not set in the constructor, but in the async function.
   // TODO: Send a PR.
   client.execute().then(() => {
-    render(<ReactGDB process={client} sourceProvider={getFile} />,
+    render(<ReactGDB process={client} sourceProvider={sourceProvider} />,
       document.getElementById('gdb'))
   })
 })
+
+window.localStorage.setItem('debug', 'gdb-js:*,react-gdb:*')
+
