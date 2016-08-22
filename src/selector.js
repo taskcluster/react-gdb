@@ -7,30 +7,22 @@ export default () => {
   let sourcesSelector = (state) => state.sources
   let threadsSelector = (state) => state.threads
 
-  let threadIdSelector = createSelector(
+  let selectedThreadSelector = createSelector(
     UIStateSelector,
     (UIState) => UIState.get('selectedThread')
   )
 
-  let threadSelector = createSelector(
-    threadIdSelector,
+  let currentThreadSelector = createSelector(
+    selectedThreadSelector,
     threadsSelector,
-    (id, threads) => threads.get(id)
+    (thread, threads) => thread ? threads.get(thread) : null
   )
 
   let currentBreaksSelector = createSelector(
-    threadIdSelector,
+    currentThreadSelector,
     breaksSelector,
-    (id, breaks) => breaks.filter((b) =>
-      b.get('thread') === id || b.get('thread') === 'all')
-  )
-
-  let currentThreadSelector = createSelector(
-    threadSelector,
-    threadIdSelector,
-    currentBreaksSelector,
-    (thread, id, breaks) => thread ?
-      thread.toMap().set('id', id).set('breaks', breaks) : null
+    (thread, breaks) => breaks.toArray().filter((b) =>
+      !b.thread || b.thread.id === thread.get('thread').id)
   )
 
   let openedFilesSelector = createSelector(
@@ -42,30 +34,38 @@ export default () => {
     sourcesSelector,
     openedFilesSelector,
     currentBreaksSelector,
-    (sources, openedFiles, breaks) => openedFiles.map((f) => {
-      let file = sources.get(f)
-      return new Map({
-        fullname: f,
-        name: file.get('name'),
-        src: file.get('src'),
-        breaks: breaks.filter((b) => b.get('file') === f)
-      })
-    })
+    (sources, files, breaks) => files.map((f) => new Map({
+      path: f,
+      src: sources.has(f) ? sources.get(f) : 'Not a project file.',
+      breaks: breaks.filter((b) => b.file === f)
+    }))
   )
 
-  let focusedFrameSelector = createSelector(
+  let positionSelector = createSelector(
     UIStateSelector,
-    (UIState) => UIState.get('focusedFrame')
+    (UIState) => UIState.get('selectedPosition')
+  )
+
+  let breaksAppliedSelector = createSelector(
+    UIStateSelector,
+    (UIState) => UIState.get('breakpointsAppliedTo')
+  )
+
+  let optionsSelector = createSelector(
+    breaksAppliedSelector,
+    (breakpointsAppliedTo) => new Map({ breakpointsAppliedTo })
   )
 
   return createSelector(
     currentFilesSelector,
+    currentBreaksSelector,
     currentThreadSelector,
     sourcesSelector,
     threadsSelector,
-    focusedFrameSelector,
-    (files, thread, sources, threads, frame) => ({
-      files, thread, sources, threads, frame
+    positionSelector,
+    optionsSelector,
+    (files, breaks, thread, sources, threads, position, options) => ({
+      files, breaks, thread, sources, threads, position, options
     })
   )
 }
