@@ -1,5 +1,5 @@
 import React from 'react'
-import GDB from 'gdb-js'
+import { GDB } from 'gdb-js'
 import { Provider, connect } from 'react-redux'
 import { Writable, Readable } from 'stream'
 import { EventEmitter } from 'events'
@@ -14,17 +14,39 @@ class ReactGDB extends React.Component {
   }
 
   render () {
-    let { process, sourceProvider, inferiorProvider } = this.props
-    let { fetch: fetchFile, basePath } = sourceProvider
+    let { process, sourceProvider, attachOnFork,
+      inferiorProvider, objfileFilter } = this.props
     let gdb = new GDB(process)
     let store = createStore()
     let selector = createSelector()
-    let actions = createActions(gdb, fetchFile, basePath, store.dispatch)
+    let actions = createActions(gdb, sourceProvider,
+      attachOnFork, store.dispatch, store.getState)
     let App = connect(selector, actions)(Layout)
 
-    gdb.on('stopped', actions.update)
+    let update = (data) => {
+      if (data.thread) {
+        actions.updateThread(data.thread)
+      } else {
+        actions.updateAllThreads()
+      }
+    }
+
+    gdb.on('stopped', update)
+    gdb.on('running', update)
     gdb.on('thread-created', actions.addThread)
     gdb.on('thread-exited', actions.removeThread)
+
+    // Let's update source files list when new objfile is loaded into
+    // GDB (e.g. `execl` calls or new target is attached).
+    let objfiles = []
+    gdb.on('new-objfile', (path) => {
+      if(path.match(objfileFilter) && !objfiles.includes(path)) {
+        actions.getSources()
+      } else {
+        objfiles.push(path)
+      }
+    })
+
     if (inferiorProvider) inferiorProvider.on('fork', actions.attachTarget)
 
     // Injecting actions for debugging purposes
@@ -46,9 +68,11 @@ ReactGDB.propTypes = {
   }).isRequired,
   sourceProvider: React.PropTypes.shape({
     fetch: React.PropTypes.func.isRequired,
-    basePath: React.PropTypes.string.isRequired
+    filter: React.PropTypes.string.isRequired
   }),
-  inferiorProvider: React.PropTypes.instanceOf(EventEmitter)
+  inferiorProvider: React.PropTypes.instanceOf(EventEmitter),
+  objfileFilter: React.PropTypes.instanceOf(RegExp).isRequired,
+  attachOnFork: React.PropTypes.bool
 }
 
 // XXX: `export default` won't work here
