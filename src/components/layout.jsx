@@ -1,11 +1,13 @@
 import React from 'react'
 import ImmutablePropTypes from 'react-immutable-proptypes'
-import { FramePropType, FilesPropType, BreaksPropType } from './common.js'
+import { PositionPropType, FilesPropType, BreaksPropType, ThreadGroupPropType,
+  FramePropType, VariablePropType, ThreadPropType } from './common.js'
 import Sources from './sources.jsx'
 import Controls from './controls.jsx'
 import styles from './layout.css'
 
 class Layout extends React.Component {
+
   componentDidMount () {
     this.props.init()
   }
@@ -15,11 +17,10 @@ class Layout extends React.Component {
   }
 
   render () {
-    let { files, thread, threads, sources, frame } = this.props
+    let { files, breaks, threads, thread, sources, position, options } = this.props
     let { openFile, selectThread, addBreak, removeBreak, interrupt, proceed,
-      closeFile, fetch, next, run, stepOut, stepIn, focus } = this.props
-
-    let threadId = thread ? thread.get('id') : null
+      closeFile, fetchFile, next, run, stepOut, stepIn, selectPosition,
+      applyBreakpointsTo } = this.props
 
     // TODO: split this file to separate components
 
@@ -27,33 +28,40 @@ class Layout extends React.Component {
     sources.forEach((value, key) => {
       sourcesList.push(
         <div key={key}>
-          <a href="#" onClick={() => openFile(key)}>
-            {key}
-          </a>
+          <a href="#" onClick={() => selectPosition(key)}>{key}</a>
         </div>
       )
     })
 
     let threadsList = []
     threads.forEach((value, key) => {
-      let clickHandler = () => {
-        let frame = value.get('frame')
-        selectThread(key)
-        focus(frame.get('file'), frame.get('line'))
-      }
+      let thread = value.get('thread')
+      let group = value.get('group')
 
       threadsList.push(
         <div key={key}>
-          <a href="#" onClick={clickHandler}>
-            {`id: ${key}, group: ${value.get('gid')}, status: ${value.get('status')}`}
+          <a href="#" onClick={() => selectThread(thread.id)}>
+            {`id: ${key}, group: ${group.id}`
+              + (thread.status ? `, status: ${thread.status}` : '')}
           </a>
         </div>
       )
     })
 
+    let breaksList = []
+    breaks.forEach((value, key) => {
+      breaksList.push(
+        <div key={key}>
+          <a href="#" onClick={() => selectPosition(value.file, value.line)}>
+            file {value.file}, line {value.line}
+          </a>, thread {value.thread ? value.thread.id : 'all'}
+        </div>
+      )
+    })
+
+    let header
     let context = []
     let callstack = []
-    let breaks = []
     if (thread) {
       thread.get('context').forEach((value, key) => {
         context.push(
@@ -67,27 +75,32 @@ class Layout extends React.Component {
         callstack.push(
           <div key={key}>
             <b>level {value.level}:</b><br />
-            <a href="#" onClick={() => { focus(value.fullname, parseInt(value.line, 10)) }}>
-              file {value.fullname}, line {value.line}
+            <a href="#" onClick={() => selectPosition(value.file, value.line)}>
+              file {value.file}, line {value.line}
             </a>
           </div>
         )
       })
 
-      thread.get('breaks').forEach((value, key) => {
-        breaks.push(
-          <div key={key}>
-            <a href="#" onClick={() => { focus(value.get('file'), value.get('line')) }}>
-              file {value.get('file')}, line {value.get('line')}
-            </a>, thread {value.get('thread')}
-          </div>
-        )
-      })
+
+      let innerThread = thread.get('thread')
+      header = <Controls next={() => next(innerThread)}
+        interrupt={() => interrupt(innerThread)}
+        proceed={() => proceed(innerThread)}
+        stepOut={() => stepOut(innerThread)}
+        stepIn={() => stepIn(innerThread)}
+        status={innerThread.status} />
+    } else {
+      header = (
+        <div>
+          program is not being run yet. <a href="#" onClick={() => run()}>RUN it!</a>
+        </div>
+      )
     }
 
-    // If the third argument is `true`, break is added to all threads.
-    let addBreakToCurrentThread = (file, pos, addToAll) => {
-      addToAll ? addBreak(file, pos) : addBreak(file, pos, threadId)
+    let addBreakToThread = (file, pos) => {
+      options.get('breakpointsAppliedTo') === 'thread'
+        ? addBreak(file, pos, thread.get('thread')) : addBreak(file, pos)
     }
 
     return (
@@ -100,27 +113,31 @@ class Layout extends React.Component {
         </div>
         <div className={styles.content}>
           <Sources files={files}
-            threadFrame={thread ? thread.get('frame') : null}
-            focusedFrame={frame}
-            openFile={openFile}
+            frame={thread ? thread.get('thread').frame : null}
+            position={position}
+            selectPosition={selectPosition}
             closeFile={closeFile}
-            fetchFile={fetch}
             removeBreak={removeBreak}
-            addBreak={addBreakToCurrentThread} />
+            addBreak={addBreakToThread} />
         </div>
         <div className={`${styles.column} ${styles.right}`}>
-          <Controls next={() => next(threadId)}
-            interrupt={() => interrupt(threadId)}
-            proceed={() => thread ? proceed(threadId) : run()}
-            stepOut={() => stepOut(threadId)}
-            stepIn={() => stepIn(threadId)}
-            status={thread ? thread.get('status') : 'idle'} />
+          {header}
           <h1>Context</h1>
           {thread ? context : 'no thread selected'}
           <h1>Callstack</h1>
           {thread ? callstack : 'no thread selected'}
           <h1>Breakpoints</h1>
-          {thread ? breaks : 'no thread selected'}
+          {breaksList.length ? breaksList : 'no breakpoints yet'}
+          <h1>Options</h1>
+          <div>
+            Apply breakpoints to:<br/>
+            <input type="radio" name="breakpoint_apply"
+              checked={options.get('breakpointsAppliedTo') === 'thread'}
+              onChange={() => applyBreakpointsTo('thread')} />to specific thread<br/>
+            <input type="radio" name="breakpoint_apply" value="to all threads"
+              checked={options.get('breakpointsAppliedTo') === 'all'}
+              onChange={() => applyBreakpointsTo('all')} />to all threads<br/>
+          </div>
         </div>
       </div>
     )
@@ -129,37 +146,13 @@ class Layout extends React.Component {
 
 Layout.propTypes = {
   files: FilesPropType.isRequired,
-  thread: ImmutablePropTypes.mapContains({
-    id: React.PropTypes.number.isRequired,
-    breaks: BreaksPropType.isRequired,
-    callstack: ImmutablePropTypes.listOf(
-      React.PropTypes.shape({
-        fullname: React.PropTypes.string.isRequired,
-        line: React.PropTypes.number.isRequired
-      })
-    ).isRequired,
-    context: ImmutablePropTypes.listOf(
-      React.PropTypes.shape({
-        scope: React.PropTypes.string.isRequired,
-        type: React.PropTypes.string.isRequired,
-        name: React.PropTypes.string.isRequired,
-        value: React.PropTypes.string.isRequired
-      })
-    ).isRequired,
-    status: React.PropTypes.string.isRequired,
-    frame: FramePropType.isRequired
-  }),
-  threads: ImmutablePropTypes.mapOf(
-    ImmutablePropTypes.contains({
-      status: React.PropTypes.string.isRequired,
-      gid: React.PropTypes.string.isRequired
-    })
-  ).isRequired,
-  sources: ImmutablePropTypes.map.isRequired,
-  frame: FramePropType,
+  breaks: BreaksPropType.isRequired,
+  thread: ThreadPropType,
+  threads: ImmutablePropTypes.mapOf(ThreadPropType).isRequired,
+  sources: ImmutablePropTypes.mapOf(React.PropTypes.string).isRequired,
+  position: PositionPropType,
   init: React.PropTypes.func.isRequired,
   exit: React.PropTypes.func.isRequired,
-  fetch: React.PropTypes.func.isRequired,
   addBreak: React.PropTypes.func.isRequired,
   removeBreak: React.PropTypes.func.isRequired,
   run: React.PropTypes.func.isRequired,
@@ -171,7 +164,8 @@ Layout.propTypes = {
   openFile: React.PropTypes.func.isRequired,
   closeFile: React.PropTypes.func.isRequired,
   selectThread: React.PropTypes.func.isRequired,
-  focus: React.PropTypes.func.isRequired
+  selectPosition: React.PropTypes.func.isRequired,
+  applyBreakpointsTo: React.PropTypes.func.isRequired
 }
 
 export default Layout

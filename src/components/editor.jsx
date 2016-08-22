@@ -1,50 +1,40 @@
 import React from 'react'
-import ImmutablePropTypes from 'react-immutable-proptypes'
 import { BreaksPropType } from './common.js'
 import AceEditor from './ace.jsx' // 'react-ace'
 import 'brace/mode/c_cpp'
 import 'brace/theme/github'
 
 class Editor extends React.Component {
-  componentDidMount () {
-    if (!this.props.text) this.props.fetchFile()
-  }
-
   onLineClick (line) {
-    if (this.props.breaks.has(line)) {
-      let id = this.props.breaks.findKey((b) => b.get('line') === line)
-      this.props.removeBreak(id)
+    let { breaks } = this.props
+
+    let breakpoint = breaks.find((b) => b.line === line)
+    if (breakpoint) {
+      this.props.removeBreak(breakpoint)
     } else {
       this.props.addBreak(line)
     }
   }
 
   render () {
-    let { highlight, focus, text, breaks, visible } = this.props
+    let { highlight, position, text, breaks, file } = this.props
 
-    let editor = (
-      // TODO: implement `focus` and `onGutterMouseDown` properties
-      <div style={{ display: visible ? 'block' : 'none' }}>
-        <AceEditor mode='c_cpp' theme='github' name='reactgdb-ace-editor'
-          value={text} readonly focus={focus}
-          markers={highlight ? [{ startRow: highlight, endRow: highlight + 1,
-            className: 'reactgdb-ace-marker', type: 'background' }] : []}
-          onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row)} />
-      </div>
+    return (
+      <AceEditor mode='c_cpp' theme='github' name={'reactgdb-ace-editor-' + file}
+        value={text} readonly={true} line={position}
+        markers={highlight ? [{ startRow: highlight, endRow: highlight + 1,
+          className: 'reactgdb-ace-marker', type: 'background' }] : []}
+        onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row)} />
     )
-    let filler = <span>Loading, please wait...</span>
-
-    return text ? editor : filler
   }
 }
 
 Editor.propTypes = {
+  file: React.PropTypes.string.isRequired,
   highlight: React.PropTypes.number,
-  focus: React.PropTypes.number,
+  position: React.PropTypes.number,
   text: React.PropTypes.string,
   breaks: BreaksPropType.isRequired,
-  visible: React.PropTypes.bool.isRequired,
-  fetchFile: React.PropTypes.func.isRequired,
   addBreak: React.PropTypes.func.isRequired,
   removeBreak: React.PropTypes.func.isRequired
 }
