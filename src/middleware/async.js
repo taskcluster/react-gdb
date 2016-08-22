@@ -12,4 +12,3 @@ export let asyncMiddleware = store => next => action => {
 
   return next({ ...action, [PROMISE]: fn() })
 }
-

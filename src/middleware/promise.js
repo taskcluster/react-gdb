@@ -27,4 +27,3 @@ export let promiseMiddleware = store => next => action => {
     )
   })
 }
-
