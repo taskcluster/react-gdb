@@ -1,13 +1,14 @@
 import { OPEN_FILE, CLOSE_FILE, SELECT_THREAD,
-  FOCUS, UPDATE } from '../constants.js'
-import { OrderedSet, Map } from 'immutable'
-import { Frame } from './common.js'
+  APPLY_BREAKS_TO, SELECT_POSITION } from '../constants.js'
+import { OrderedSet, Map, Record } from 'immutable'
+
+let Position = new Record({ file: null, line: null })
 
 let initialState = new Map({
   openedFiles: new OrderedSet(),
   selectedThread: null,
-  focusedFrame: null,
-  focusOnFrame: null
+  selectedPosition: null,
+  breakpointsAppliedTo: 'all'
 })
 
 export default (state = initialState, action) => {
@@ -17,21 +18,12 @@ export default (state = initialState, action) => {
     case CLOSE_FILE:
       return state.update('openedFiles', (files) => files.remove(action.file))
     case SELECT_THREAD:
-      return state.set('selectedThread', action.thread)
-    case FOCUS:
-      return state.set('focusedFrame', new Frame({
-        file: action.file,
-        line: action.line
-      }))
-    case UPDATE:
-      if (state.get('selectedThread') === action.thread) {
-        return state.set('focusedFrame', new Frame({
-          file: action.filename,
-          line: action.line
-        }))
-      } else {
-        return state
-      }
+      return state.set('selectedThread', action.id || null)
+    case SELECT_POSITION:
+      return state.set('selectedPosition', action.file
+        ? new Position({ file: action.file, line: action.line || null }) : null)
+    case APPLY_BREAKS_TO:
+      return state.set('breakpointsAppliedTo', action.scope)
     default:
       return state
   }

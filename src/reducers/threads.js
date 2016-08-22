@@ -1,35 +1,30 @@
-import { UPDATE, PROCEED, REMOVE_THREAD, ADD_THREAD } from '../constants.js'
-import { Map, List, Record } from 'immutable'
-import { Frame } from './common.js'
+import { UPDATE_THREAD,
+  REMOVE_THREAD, ADD_THREAD } from '../constants.js'
+import { OrderedMap, List, Record } from 'immutable'
 
 const Thread = new Record({
-  gid: null,
-  status: 'running',
-  context: new List(),
-  callstack: new List(),
-  frame: new Frame()
+  thread: null, // gdb-js Thread object
+  group: null, // gdb-js ThreadGroup object
+  context: new List(), // list of gdb-js Variable objects
+  callstack: new List() // list of gdb-js Frame objects
 })
 
-export default (state = new Map(), action) => {
+export default (state = new OrderedMap(), action) => {
   switch (action.type) {
-    case UPDATE:
-      let { thread, context, callstack, filename } = action
-      // TODO: below should be done by gdb-js
-      let line = parseInt(action.line, 10)
-      let newThread = state.get(thread).withMutations(map => {
-        map.set('context', new List(context))
-          .set('callstack', new List(callstack))
-          .set('frame', new Frame({ file: filename, line }))
-          .set('status', 'stopped')
-      })
-      return state.set(thread, newThread)
-    case PROCEED:
-      return state.setIn([action.thread, 'status'], 'running')
+    case UPDATE_THREAD:
+      let thread = state.get(action.thread.id)
+      let { callstack, context } = action
+      return state.set(action.thread.id, new Thread({
+        thread: action.thread,
+        group: thread.get('group'),
+        context: context ? new List(context) : thread.get('context'),
+        callstack: callstack ? new List(callstack) : thread.get('callstack')
+      }))
     case ADD_THREAD:
-      let id = parseInt(action.id, 10)
-      return state.set(id, new Thread({ gid: action.gid }))
+      return state.set(action.thread.id,
+        new Thread({ thread: action.thread, group: action.thread.group }))
     case REMOVE_THREAD:
-      return state.delete(action.id)
+      return state.delete(action.thread.id)
     default:
       return state
   }
