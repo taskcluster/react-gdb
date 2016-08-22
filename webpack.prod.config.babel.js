@@ -23,15 +23,13 @@ export default {
     new webpack.NoErrorsPlugin(),
     new ExtractTextPlugin('assets/style.css', { allChunks: true }),
     new webpack.DefinePlugin({
-      NODE_ENV: JSON.stringify('production')
+      'process.env': {
+        'NODE_ENV': JSON.stringify('production')
+      }
     })
   ],
 
   module: {
-    preLoaders: [{
-      test: /\.json$/,
-      loader: 'json'
-    }],
     loaders: [{
       test: /\.(js|jsx)$/,
       loader: 'babel',
@@ -40,10 +38,15 @@ export default {
       test: /\.css$/,
       loader: ExtractTextPlugin.extract('style',
         'css?minimize&modules&importLoaders=1!postcss')
+    }, {
+      // Use this to exclude unneeded files from production build.
+      // Make sure that the project works fine without these modules.
+      test: [path.resolve('src/middleware/error.js')],
+      loader: 'null'
     }]
   },
 
-  externals: [nodeExternals(), 'gdb-js'],
+  externals: [nodeExternals(), nodeExternals({ modulesDir: 'modules' })],
 
   postcss: () => [precss, autoprefixer],
 

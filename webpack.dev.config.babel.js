@@ -26,10 +26,6 @@ export default {
   },
 
   module: {
-    preLoaders: [{
-      test: /\.json$/,
-      loader: 'json'
-    }],
     loaders: [{
       test: /\.js$/,
       loader: 'source-map-loader',
@@ -48,6 +44,10 @@ export default {
       loader: extractExample.extract('style',
         'css?modules&importLoaders=1!postcss'),
       include: path.resolve('example')
+    }, {
+      // Avoid errors during build caused by `ws` package.
+      test: /\/node_modules\/ws\//,
+      loader: 'null'
     }]
   },
 
@@ -55,17 +55,25 @@ export default {
     extractReactGDB,
     extractExample,
     new webpack.NoErrorsPlugin(),
+    new webpack.DefinePlugin({
+      'process.env': {
+        'NODE_ENV': JSON.stringify('development')
+      }
+    }),
     new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.js',
       (module) => /node_modules/.test(module.resource))
   ],
 
   resolve: {
     alias: {
-      'gdb-js': path.resolve('modules/gdb-js'),
       'react-gdb': path.resolve('src/index.jsx'),
-      'fs': 'empty-module',
-      'ws': 'empty-module'
-    }
+    },
+    modulesDirectories: ['modules', 'node_modules']
+  },
+
+  node: {
+    // Avoid errors during build caused by `source-map-support` package.
+    fs: 'empty'
   },
 
   devtool: 'source-map',
@@ -76,7 +84,7 @@ export default {
   },
 
   watchOptions: {
-    aggregateTimeout: 100
+    aggregateTimeout: 500
   },
 
   postcss: () => [precss, autoprefixer]
