@@ -5,7 +5,8 @@ import { render } from 'react-dom'
 import ExecClient from 'docker-exec-websocket-server/browser'
 import ReactGDB from 'react-gdb'
 
-let example = 'tickets'
+// Any example from `gdb-examples` repo.
+let example = 'hackathon'
 
 let client = new ExecClient({
   url: 'ws://localhost:9090/docker-exec',
@@ -26,7 +27,8 @@ let sourceProvider = {
 
 document.addEventListener('DOMContentLoaded', () => {
   client.execute().then(() => {
-    let reactGDB = <ReactGDB process={client} attachOnFork={true}
+    client.stdout.on('data', (data) => console.log(data.toString()))
+    let reactGDB = <ReactGDB process={client} attachOnFork
       sourceProvider={sourceProvider} objfileFilter={/^\/examples/} />
     render(reactGDB, document.getElementById('gdb'))
   })
