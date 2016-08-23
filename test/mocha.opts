@@ -1,5 +1,4 @@
---ui tdd
---timeout 240s
---reporter spec
 --require source-map-support/register
-
+--require babel-polyfill
+--compilers js:babel-core/register
+--timeout 40s

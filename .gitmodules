@@ -1,0 +1,3 @@
+[submodule "modules/gdb-js"]
+	path = modules/gdb-js
+	url = https://github.com/taskcluster/gdb-js.git

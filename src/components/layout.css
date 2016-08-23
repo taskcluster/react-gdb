@@ -1,0 +1,32 @@
+$column: 200px;
+$padding: 215px;
+
+.wrap {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+.column {
+  width: $column;
+  position: absolute;
+  word-wrap: break-word;
+  top: 0;
+  height: 100%;
+}
+
+.left {
+  left: 0;
+}
+
+.right {
+  right: 0;
+}
+
+.content {
+  padding: 0 $padding 0 $padding;
+  width: 100%;
+  height: 100%;
+}
