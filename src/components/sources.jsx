@@ -40,9 +40,13 @@ class Sources extends React.Component {
           if (line) {
             debug(`Focused on file ${key}, line ${line}.`)
             editorOptions.position = line
+            // XXX: a little hack to disable line positioning.
+            // It can be possibly done with smth like `onScroll`
+            // property of the editor. Just make sure that it's not
+            // executing on every render since it can cause freezing
+            // in your browser.
+            setTimeout(() => selectPosition(currentFile), 0)
           }
-          // Disable line positioning
-          // selectPosition(currentFile)
         }
 
         editor = <Editor {...editorOptions} />

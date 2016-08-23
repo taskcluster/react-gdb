@@ -35,14 +35,15 @@ class Layout extends React.Component {
 
     let threadsList = []
     threads.forEach((value, key) => {
-      let thread = value.get('thread')
+      let innerThread = value.get('thread')
       let group = value.get('group')
+      let msg = `id: ${key}, group: ${group.id}`
+        + (innerThread.status ? `, status: ${innerThread.status}` : '')
 
       threadsList.push(
         <div key={key}>
-          <a href="#" onClick={() => selectThread(thread.id)}>
-            {`id: ${key}, group: ${group.id}`
-              + (thread.status ? `, status: ${thread.status}` : '')}
+          <a href="#" onClick={() => selectThread(innerThread.id)}>
+            {thread.get('thread').id === innerThread.id ? <strong>{msg}</strong> : msg}
           </a>
         </div>
       )
@@ -110,6 +111,16 @@ class Layout extends React.Component {
           {sourcesList}
           <h1>Threads</h1>
           {threadsList}
+          <h1>Options</h1>
+          <div>
+            Apply breakpoints to:<br/>
+            <input type="radio" name="breakpoint_apply"
+              checked={options.get('breakpointsAppliedTo') === 'thread'}
+              onChange={() => applyBreakpointsTo('thread')} />to specific thread<br/>
+            <input type="radio" name="breakpoint_apply" value="to all threads"
+              checked={options.get('breakpointsAppliedTo') === 'all'}
+              onChange={() => applyBreakpointsTo('all')} />to all threads<br/>
+          </div>
         </div>
         <div className={styles.content}>
           <Sources files={files}
@@ -121,6 +132,7 @@ class Layout extends React.Component {
             addBreak={addBreakToThread} />
         </div>
         <div className={`${styles.column} ${styles.right}`}>
+          <h1>Controls</h1>
           {header}
           <h1>Context</h1>
           {thread ? context : 'no thread selected'}
@@ -128,16 +140,6 @@ class Layout extends React.Component {
           {thread ? callstack : 'no thread selected'}
           <h1>Breakpoints</h1>
           {breaksList.length ? breaksList : 'no breakpoints yet'}
-          <h1>Options</h1>
-          <div>
-            Apply breakpoints to:<br/>
-            <input type="radio" name="breakpoint_apply"
-              checked={options.get('breakpointsAppliedTo') === 'thread'}
-              onChange={() => applyBreakpointsTo('thread')} />to specific thread<br/>
-            <input type="radio" name="breakpoint_apply" value="to all threads"
-              checked={options.get('breakpointsAppliedTo') === 'all'}
-              onChange={() => applyBreakpointsTo('all')} />to all threads<br/>
-          </div>
         </div>
       </div>
     )

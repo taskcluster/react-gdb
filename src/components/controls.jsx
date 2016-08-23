@@ -15,7 +15,7 @@ class Controls extends React.Component {
           {flowButton}|
           <a href="#" onClick={next}>Next</a>|
           <a href="#" onClick={stepOut}>Step Out</a>|
-          <a href="#" onClick={stepIn}>Step In</a>|
+          <a href="#" onClick={stepIn}>Step In</a>
         </div>
       )
     } else {
