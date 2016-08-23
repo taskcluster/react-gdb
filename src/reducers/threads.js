@@ -14,12 +14,17 @@ export default (state = new OrderedMap(), action) => {
     case UPDATE_THREAD:
       let thread = state.get(action.thread.id)
       let { callstack, context } = action
-      return state.set(action.thread.id, new Thread({
-        thread: action.thread,
-        group: thread.get('group'),
-        context: context ? new List(context) : thread.get('context'),
-        callstack: callstack ? new List(callstack) : thread.get('callstack')
-      }))
+      // XXX: investigate this workaround
+      if (thread) {
+        return state.set(action.thread.id, new Thread({
+          thread: action.thread,
+          group: thread.get('group'),
+          context: context ? new List(context) : thread.get('context'),
+          callstack: callstack ? new List(callstack) : thread.get('callstack')
+        }))
+      } else {
+        return state
+      }
     case ADD_THREAD:
       return state.set(action.thread.id,
         new Thread({ thread: action.thread, group: action.thread.group }))
