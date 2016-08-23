@@ -69,7 +69,7 @@ ReactGDB.propTypes = {
   sourceProvider: React.PropTypes.shape({
     fetch: React.PropTypes.func.isRequired,
     filter: React.PropTypes.string.isRequired
-  }),
+  }).isRequired,
   inferiorProvider: React.PropTypes.instanceOf(EventEmitter),
   objfileFilter: React.PropTypes.instanceOf(RegExp).isRequired,
   attachOnFork: React.PropTypes.bool

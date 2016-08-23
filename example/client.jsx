@@ -6,7 +6,7 @@ import ExecClient from 'docker-exec-websocket-server/browser'
 import ReactGDB from 'react-gdb'
 
 // Any example from `gdb-examples` repo.
-let example = 'hackathon'
+let example = 'tickets'
 
 let client = new ExecClient({
   url: 'ws://localhost:9090/docker-exec',
