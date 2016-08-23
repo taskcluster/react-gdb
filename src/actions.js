@@ -44,8 +44,8 @@ export default (gdb, sourceProvider, attachOnFork, dispatch, getState) => {
           callstack = await gdb.callstack(thread)
           context = await gdb.context(thread)
         } catch (e) {
-          // Probably segmentation fault
-          console.error(e)
+          let msg = 'Error while examining stack info. Probably segmentation fault.'
+          console.error(new Error(msg))
         }
 
         if (getState().UIState.get('selectedThread') === thread.id) {
@@ -157,10 +157,12 @@ export default (gdb, sourceProvider, attachOnFork, dispatch, getState) => {
 
   actions.removeThread = (thread) => {
     let state = getState()
-    if (state.UIState.get('selectedThread').id === thread.id) {
+    if (state.UIState.get('selectedThread') === thread.id) {
       let threads = state.threads.keySeq().toArray()
-      let index = threads.indexOf(threads.id)
-      dispatch(actions.selectThread(threads[index - 1] || threads[index + 1]))
+      if (threads.length > 1) {
+        let index = threads.indexOf(thread.id)
+        dispatch(actions.selectThread(threads[index - 1] || threads[index + 1]))
+      }
     }
     return { type: REMOVE_THREAD, thread }
   }
