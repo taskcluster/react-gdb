@@ -1,5 +1,5 @@
 import { ADD_BREAK, REMOVE_BREAK } from '../constants.js'
-import { Map, Record } from 'immutable'
+import { Map } from 'immutable'
 
 export default (state = new Map(), action) => {
   switch (action.type) {

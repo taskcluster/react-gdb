@@ -1,7 +1,7 @@
 import React from 'react'
 import ImmutablePropTypes from 'react-immutable-proptypes'
-import { PositionPropType, FilesPropType, BreaksPropType, ThreadGroupPropType,
-  FramePropType, VariablePropType, ThreadPropType } from './common.js'
+import { PositionPropType, FilesPropType,
+  BreaksPropType, ThreadPropType } from './common.js'
 import Sources from './sources.jsx'
 import Controls from './controls.jsx'
 import styles from './layout.css'
@@ -18,8 +18,8 @@ class Layout extends React.Component {
 
   render () {
     let { files, breaks, threads, thread, sources, position, options } = this.props
-    let { openFile, selectThread, addBreak, removeBreak, interrupt, proceed,
-      closeFile, fetchFile, next, run, stepOut, stepIn, selectPosition,
+    let { selectThread, addBreak, removeBreak, interrupt, proceed,
+      closeFile, next, run, stepOut, stepIn, selectPosition,
       applyBreakpointsTo } = this.props
 
     // TODO: split this file to separate components
@@ -28,7 +28,7 @@ class Layout extends React.Component {
     sources.forEach((value, key) => {
       sourcesList.push(
         <div key={key}>
-          <a href="#" onClick={() => selectPosition(key)}>{key}</a>
+          <a href='#' onClick={() => selectPosition(key)}>{key}</a>
         </div>
       )
     })
@@ -37,12 +37,12 @@ class Layout extends React.Component {
     threads.forEach((value, key) => {
       let innerThread = value.get('thread')
       let group = value.get('group')
-      let msg = `id: ${key}, group: ${group.id}`
-        + (innerThread.status ? `, status: ${innerThread.status}` : '')
+      let msg = `id: ${key}, group: ${group.id}` +
+        (innerThread.status ? `, status: ${innerThread.status}` : '')
 
       threadsList.push(
         <div key={key}>
-          <a href="#" onClick={() => selectThread(innerThread.id)}>
+          <a href='#' onClick={() => selectThread(innerThread.id)}>
             {thread.get('thread').id === innerThread.id ? <strong>{msg}</strong> : msg}
           </a>
         </div>
@@ -53,7 +53,7 @@ class Layout extends React.Component {
     breaks.forEach((value, key) => {
       breaksList.push(
         <div key={key}>
-          <a href="#" onClick={() => selectPosition(value.file, value.line)}>
+          <a href='#' onClick={() => selectPosition(value.file, value.line)}>
             file {value.file}, line {value.line}
           </a>, thread {value.thread ? value.thread.id : 'all'}
         </div>
@@ -76,13 +76,12 @@ class Layout extends React.Component {
         callstack.push(
           <div key={key}>
             <b>level {value.level}:</b><br />
-            <a href="#" onClick={() => selectPosition(value.file, value.line)}>
+            <a href='#' onClick={() => selectPosition(value.file, value.line)}>
               file {value.file}, line {value.line}
             </a>
           </div>
         )
       })
-
 
       let innerThread = thread.get('thread')
       header = <Controls next={() => next(innerThread)}
@@ -94,7 +93,7 @@ class Layout extends React.Component {
     } else {
       header = (
         <div>
-          program is not being run yet. <a href="#" onClick={() => run()}>RUN it!</a>
+          program is not being run yet. <a href='#' onClick={() => run()}>RUN it!</a>
         </div>
       )
     }
@@ -113,13 +112,13 @@ class Layout extends React.Component {
           {threadsList}
           <h1>Options</h1>
           <div>
-            Apply breakpoints to:<br/>
-            <input type="radio" name="breakpoint_apply"
+            Apply breakpoints to:<br />
+            <input type='radio' name='breakpoint_apply'
               checked={options.get('breakpointsAppliedTo') === 'thread'}
-              onChange={() => applyBreakpointsTo('thread')} />to specific thread<br/>
-            <input type="radio" name="breakpoint_apply" value="to all threads"
+              onChange={() => applyBreakpointsTo('thread')} />to specific thread<br />
+            <input type='radio' name='breakpoint_apply' value='to all threads'
               checked={options.get('breakpointsAppliedTo') === 'all'}
-              onChange={() => applyBreakpointsTo('all')} />to all threads<br/>
+              onChange={() => applyBreakpointsTo('all')} />to all threads<br />
           </div>
         </div>
         <div className={styles.content}>
@@ -163,7 +162,6 @@ Layout.propTypes = {
   stepIn: React.PropTypes.func.isRequired,
   stepOut: React.PropTypes.func.isRequired,
   next: React.PropTypes.func.isRequired,
-  openFile: React.PropTypes.func.isRequired,
   closeFile: React.PropTypes.func.isRequired,
   selectThread: React.PropTypes.func.isRequired,
   selectPosition: React.PropTypes.func.isRequired,

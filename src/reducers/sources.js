@@ -1,4 +1,4 @@
-import { INIT, FETCH_FILE, GET_SOURCES } from '../constants.js'
+import { FETCH_FILE, GET_SOURCES } from '../constants.js'
 import { Map } from 'immutable'
 
 export default (state = new Map(), action) => {

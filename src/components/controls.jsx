@@ -8,14 +8,14 @@ class Controls extends React.Component {
     let content
     if (status) {
       let flowButton = status === 'running'
-        ? <a href="#" onClick={interrupt}>Pause</a>
-        : <a href="#" onClick={proceed}>Continue</a>
+        ? <a href='#' onClick={interrupt}>Pause</a>
+        : <a href='#' onClick={proceed}>Continue</a>
       content = (
         <div>
           {flowButton}|
-          <a href="#" onClick={next}>Next</a>|
-          <a href="#" onClick={stepOut}>Step Out</a>|
-          <a href="#" onClick={stepIn}>Step In</a>
+          <a href='#' onClick={next}>Next</a>|
+          <a href='#' onClick={stepOut}>Step Out</a>|
+          <a href='#' onClick={stepIn}>Step In</a>
         </div>
       )
     } else {

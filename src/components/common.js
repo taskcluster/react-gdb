@@ -12,7 +12,7 @@ export const ThreadPropType = ImmutablePropTypes.recordOf({
   thread: React.PropTypes.instanceOf(Thread),
   group: ThreadGroupPropType.isRequired,
   callstack: ImmutablePropTypes.listOf(FramePropType).isRequired,
-  context: ImmutablePropTypes.listOf(VariablePropType).isRequired,
+  context: ImmutablePropTypes.listOf(VariablePropType).isRequired
 })
 
 export const FilesPropType = ImmutablePropTypes.orderedSetOf(

@@ -25,7 +25,7 @@ class Editor extends React.Component {
 
     return (
       <AceEditor mode='c_cpp' theme='github' name={'reactgdb-ace-editor-' + file}
-        value={text} readOnly scrollToLine={position} width="700px" height="600px"
+        value={text} readOnly scrollToLine={position} width='700px' height='600px'
         breaks={breaks.map((b) => b.line - 1)} markers={highlight ? [line] : []}
         onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row + 1)} />
     )

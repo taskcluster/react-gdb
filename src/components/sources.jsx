@@ -16,8 +16,8 @@ class Sources extends React.Component {
 
       filesList.push(
         <div key={key}>
-          <a href="#" onClick={() => selectPosition(key)}>{key}</a>
-          <strong> (<a href="#" onClick={() => closeFile(key)}>close</a>)</strong>
+          <a href='#' onClick={() => selectPosition(key)}>{key}</a>
+          <strong> (<a href='#' onClick={() => closeFile(key)}>close</a>)</strong>
         </div>
       )
 

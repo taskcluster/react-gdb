@@ -66,7 +66,7 @@ export default {
 
   resolve: {
     alias: {
-      'react-gdb': path.resolve('src/index.jsx'),
+      'react-gdb': path.resolve('src/index.jsx')
     },
     modulesDirectories: ['modules', 'node_modules']
   },

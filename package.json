@@ -11,7 +11,7 @@
   "scripts": {
     "test": "DEBUG=gdb-js:*,react-gdb:* mocha",
     "start": "npm run example & npm run watch",
-    "prepublish": "npm run release && npm run mocha && npm run lint",
+    "prepublish": "npm run release && npm test && npm run lint",
     "postpublish": "npm run clean",
     "docker-run": "docker run -i -d --name react-gdb baygeldin/gdb-examples",
     "docker-rm": "docker rm -f react-gdb",
