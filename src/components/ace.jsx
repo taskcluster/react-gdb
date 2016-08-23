@@ -22,6 +22,7 @@ export default class ReactAce extends Component {
     super(props);
     [
       'onChange',
+      'onGutterMouseDown',
       'onFocus',
       'onBlur',
       'onCopy',
@@ -52,6 +53,7 @@ export default class ReactAce extends Component {
       commands,
       annotations,
       markers,
+      breaks,
     } = this.props;
 
     this.editor = ace.edit(name);
@@ -77,10 +79,12 @@ export default class ReactAce extends Component {
     this.editor.on('copy', this.onCopy);
     this.editor.on('paste', this.onPaste);
     this.editor.on('change', this.onChange);
+    this.editor.on('guttermousedown', this.onGutterMouseDown);
     this.editor.session.on('changeScrollTop', this.onScroll);
     this.handleOptions(this.props);
     this.editor.getSession().setAnnotations(annotations || []);
     this.handleMarkers(markers || []);
+    this.handleBreakpoints(breaks || []);
 
     // get a list of possible options to avoid 'misspelled option errors'
     const availableOptions = this.editor.$options;
@@ -131,6 +135,12 @@ export default class ReactAce extends Component {
       this.refs.editor.className = ' ' + nextProps.className + ' ' + appliedClassesArray.join(' ');
     }
 
+    if (!isEqual(nextProps.breaks !== oldProps.breaks)) {
+      this.handleBreakpoints(nextProps.breaks || []);
+    }
+    if (nextProps.scrollToLine) {
+      this.editor.scrollToLine(nextProps.scrollToLine, true, true, () => {})
+    }
     if (nextProps.mode !== oldProps.mode) {
       this.editor.getSession().setMode('ace/mode/' + nextProps.mode);
     }
@@ -177,6 +187,12 @@ export default class ReactAce extends Component {
     if (this.props.onChange && !this.silent) {
       const value = this.editor.getValue();
       this.props.onChange(value);
+    }
+  }
+
+  onGutterMouseDown(e) {
+    if (this.props.onGutterMouseDown) {
+      this.props.onGutterMouseDown(e);
     }
   }
 
@@ -239,6 +255,16 @@ export default class ReactAce extends Component {
     });
   }
 
+  handleBreakpoints(breaks) {
+    let currentBreaks = this.editor.getSession().getBreakpoints()
+    for (const i in currentBreaks) {
+      if (currentBreaks.hasOwnProperty(i)) {
+        this.editor.getSession().clearBreakpoint(i)
+      }
+    }
+    breaks.forEach((b) => { this.editor.getSession().setBreakpoint(b) })
+  }
+
   render() {
     const { name, width, height } = this.props;
     const divStyle = { width, height };
@@ -261,7 +287,10 @@ ReactAce.propTypes = {
   width: PropTypes.string,
   fontSize: PropTypes.number,
   showGutter: PropTypes.bool,
+  scrollToLine: PropTypes.number,
   onChange: PropTypes.func,
+  onGutterMouseDown: PropTypes.func,
+  breaks: PropTypes.arrayOf(PropTypes.number),
   onCopy: PropTypes.func,
   onPaste: PropTypes.func,
   onFocus: PropTypes.func,
@@ -303,7 +332,10 @@ ReactAce.defaultProps = {
   value: '',
   fontSize: 12,
   showGutter: true,
+  scrollToLine: null,
+  breaks: [],
   onChange: null,
+  onGutterMouseDown: null,
   onPaste: null,
   onLoad: null,
   onScroll: null,

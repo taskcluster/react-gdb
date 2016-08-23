@@ -3,11 +3,11 @@ import { BreaksPropType } from './common.js'
 import AceEditor from './ace.jsx' // 'react-ace'
 import 'brace/mode/c_cpp'
 import 'brace/theme/github'
+import styles from './editor.css'
 
 class Editor extends React.Component {
   onLineClick (line) {
     let { breaks } = this.props
-
     let breakpoint = breaks.find((b) => b.line === line)
     if (breakpoint) {
       this.props.removeBreak(breakpoint)
@@ -19,12 +19,15 @@ class Editor extends React.Component {
   render () {
     let { highlight, position, text, breaks, file } = this.props
 
+    // Line to highlight (where the current thread is).
+    let line = { startRow: highlight - 1, startCol: 0, endRow: highlight, endCol: 0,
+      className: styles['reactgdb-ace-marker'], type: 'background' }
+
     return (
       <AceEditor mode='c_cpp' theme='github' name={'reactgdb-ace-editor-' + file}
-        value={text} readonly={true} line={position}
-        markers={highlight ? [{ startRow: highlight, endRow: highlight + 1,
-          className: 'reactgdb-ace-marker', type: 'background' }] : []}
-        onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row)} />
+        value={text} readOnly scrollToLine={position} width="700px" height="600px"
+        breaks={breaks.map((b) => b.line - 1)} markers={highlight ? [line] : []}
+        onGutterMouseDown={(e) => this.onLineClick(e.getDocumentPosition().row + 1)} />
     )
   }
 }
